@@ -9,7 +9,7 @@ import {Funderr} from "../src/Funderr.sol";
 contract DeployFunderr is Script {
     function run() external returns (Funderr) {
         vm.startBroadcast();
-        Funderr funderr = new Funderr(100, 2000, 30 days);
+        Funderr funderr = new Funderr(100, 2000, 30 days, 0.005 ether);
         vm.stopBroadcast();
 
         return funderr;

@@ -26,6 +26,9 @@ contract Funderr {
     error Funderr__CampaignContributionsHasBeenWithdrawn();
     error Funderr__TitleTooLong();
     error Funderr__DescriptionTooLong();
+    error Funderr__CreateCampaignFeeNotPaid();
+    error Funderr__NoFeesToCollect();
+    error Funderr__CollectFeesCallFailed();
 
     // Structs
 
@@ -43,22 +46,26 @@ contract Funderr {
     // State variables
 
     uint256 private campaignIdCounter;
+    uint256 private feesCollected;
     address private immutable i_owner;
     uint256 private immutable i_activeFundedCampaignWindow;
     uint256 private immutable i_maxTitleLength;
     uint256 private immutable i_maxDescriptionLength;
+    uint256 private immutable i_createCampaignFee;
     mapping(uint256 => Campaign) private campaigns;
     mapping(address => uint256[]) private campaignsByOwner;
 
     // Events
 
-    event CampaignCreated(uint256 campaignId, address indexed owner, uint256 goal, uint256 deadline);
+    event CampaignCreated(uint256 indexed campaignId, address indexed owner, uint256 goal, uint256 deadline);
 
     event ContributionReceived(uint256 indexed campaignId, address indexed contributor, uint256 amount);
 
     event FundsWithdrawn(uint256 indexed campaignId, address indexed owner, uint256 amount);
 
     event RefundIssued(uint256 indexed campaignId, address indexed contributor, uint256 amount);
+
+    event FeesCollected(address indexed collector, uint256 amount);
 
     // Modifiers
 
@@ -111,11 +118,17 @@ contract Funderr {
 
     // Constructor
 
-    constructor(uint256 maxTitleLength, uint256 maxDescriptionLength, uint256 activeFundedCampaignWindow) {
+    constructor(
+        uint256 maxTitleLength,
+        uint256 maxDescriptionLength,
+        uint256 activeFundedCampaignWindow,
+        uint256 createCampaignFee
+    ) {
         i_owner = msg.sender;
         i_maxTitleLength = maxTitleLength;
         i_maxDescriptionLength = maxDescriptionLength;
         i_activeFundedCampaignWindow = activeFundedCampaignWindow;
+        i_createCampaignFee = createCampaignFee;
     }
 
     // Public functional functions
@@ -125,7 +138,11 @@ contract Funderr {
         uint256 durationInSeconds,
         string memory title,
         string memory description
-    ) external titleTooLong(title) descriptionTooLong(description) {
+    ) external payable titleTooLong(title) descriptionTooLong(description) {
+        if (msg.value != i_createCampaignFee) {
+            revert Funderr__CreateCampaignFeeNotPaid();
+        }
+
         uint256 campaignId = campaignIdCounter++;
         Campaign storage c = campaigns[campaignId];
 
@@ -136,8 +153,22 @@ contract Funderr {
         c.description = description;
 
         campaignsByOwner[msg.sender].push(campaignId);
+        feesCollected += i_createCampaignFee;
 
         emit CampaignCreated(campaignId, c.owner, c.goal, c.deadline);
+    }
+
+    function collectFees() external onlyOwner {
+        if (feesCollected == 0) revert Funderr__NoFeesToCollect();
+
+        uint256 feesToTransfer = feesCollected;
+        feesCollected = 0;
+
+        (bool callSuccess,) = payable(msg.sender).call{value: feesToTransfer}("");
+
+        if (!callSuccess) revert Funderr__CollectFeesCallFailed();
+
+        emit FeesCollected(msg.sender, feesToTransfer);
     }
 
     function contribute(uint256 campaignId) external payable campaignExists(campaignId) afterDeadline(campaignId) {
@@ -212,6 +243,10 @@ contract Funderr {
         return campaignIdCounter;
     }
 
+    function getFeesCollected() external view returns (uint256) {
+        return feesCollected;
+    }
+
     function getActiveFundedCampaignWindow() external view returns (uint256) {
         return i_activeFundedCampaignWindow;
     }
@@ -222,6 +257,10 @@ contract Funderr {
 
     function getMaxDescriptionLength() external view returns (uint256) {
         return i_maxDescriptionLength;
+    }
+
+    function getCreateCampaignFee() external view returns (uint256) {
+        return i_createCampaignFee;
     }
 
     function getCampaign(uint256 campaignId)
