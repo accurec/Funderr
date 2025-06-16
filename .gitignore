@@ -10,5 +10,9 @@ out/
 # Docs
 docs/
 
-# Dotenv file
+broadcast/
+lib/
+
+.gas-snapshot
+
 .env
