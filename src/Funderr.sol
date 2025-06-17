@@ -6,6 +6,7 @@ import "./Modifiers.sol";
 import "./Events.sol";
 
 // TODO: Add campaign URL (?)
+// TODO: Add ability to upload images to campaign
 
 contract Funderr is Errors, Modifiers, Events {
     // State variables
