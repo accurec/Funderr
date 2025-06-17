@@ -24,7 +24,6 @@ contract FunderrTest is Test {
     uint256 constant searchCampaignId = 0;
 
     // Helper functions
-
     function generateStringOfLength(uint256 length) internal pure returns (string memory) {
         bytes memory result = new bytes(length);
 
@@ -36,7 +35,6 @@ contract FunderrTest is Test {
     }
 
     // Setup
-
     function setUp() external {
         DeployFunderr deployFunderr = new DeployFunderr();
         funderr = deployFunderr.run();
@@ -48,7 +46,6 @@ contract FunderrTest is Test {
     }
 
     // Test public helper functions
-
     function testOwnerIsDeployer() public view {
         assertEq(msg.sender, funderr.getOwner());
     }
@@ -104,9 +101,7 @@ contract FunderrTest is Test {
     }
 
     // Test public functional functions
-
     // -- Create campaign
-
     function testCreateCampaignFailsWhenTitleIsTooLong() public {
         string memory tooLongTitle = generateStringOfLength(funderr.getMaxTitleLength() + 1);
 
@@ -183,7 +178,6 @@ contract FunderrTest is Test {
     }
 
     // -- Contribute
-
     function testContributeFailsWhenCampaignDoesNotExist() public {
         vm.expectRevert(Errors.Funderr__CampaignDoesNotExist.selector);
         funderr.contribute(1);
@@ -281,7 +275,6 @@ contract FunderrTest is Test {
     }
 
     // -- Withdraw campaign contributions
-
     function testWithdrawCampaignContributionsOnlyOwnerCanWIthdraw() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
@@ -418,7 +411,6 @@ contract FunderrTest is Test {
     }
 
     // -- Refund contributor contributions
-
     function testRefundContributorContributionsFailsWhenCampaignDoesNotExist() public {
         vm.expectRevert(Errors.Funderr__CampaignDoesNotExist.selector);
         funderr.refundContributorContributions(0);
@@ -557,7 +549,6 @@ contract FunderrTest is Test {
     }
 
     // -- Collect fees
-
     function testCollectFeesCanOnlyBeCalledByOwner() public {
         vm.startPrank(USER);
         vm.expectRevert(Errors.Funderr__OnlyOwner.selector);
