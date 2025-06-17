@@ -25,9 +25,7 @@ contract FunderrTest is Test {
 
     // Helper functions
 
-    function generateStringOfLength(
-        uint256 length
-    ) internal pure returns (string memory) {
+    function generateStringOfLength(uint256 length) internal pure returns (string memory) {
         bytes memory result = new bytes(length);
 
         for (uint256 i = 0; i < length; i++) {
@@ -58,10 +56,7 @@ contract FunderrTest is Test {
     function testGetCampaignReturnsDataWhenCampaignExists() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -91,30 +86,19 @@ contract FunderrTest is Test {
         funderr.getCampaign(searchCampaignId);
     }
 
-    function testGetCampaingContributionByContributorFailsWhenCampaignDoesNotExist()
-        public
-    {
+    function testGetCampaingContributionByContributorFailsWhenCampaignDoesNotExist() public {
         vm.expectRevert(Errors.Funderr__CampaignDoesNotExist.selector);
-        funderr.getCampaingContributionByContributor(
-            searchCampaignId,
-            CAMPAIGN_1_OWNER
-        );
+        funderr.getCampaingContributionByContributor(searchCampaignId, CAMPAIGN_1_OWNER);
     }
 
-    function testGetCampaingContributionByContributorReturnsZeroForNonExistentContributor()
-        public
-    {
+    function testGetCampaingContributionByContributorReturnsZeroForNonExistentContributor() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
-        uint256 contributedByUser2 = funderr
-            .getCampaingContributionByContributor(searchCampaignId, USER_2);
+        uint256 contributedByUser2 = funderr.getCampaingContributionByContributor(searchCampaignId, USER_2);
 
         assertEq(0, contributedByUser2);
     }
@@ -124,52 +108,32 @@ contract FunderrTest is Test {
     // -- Create campaign
 
     function testCreateCampaignFailsWhenTitleIsTooLong() public {
-        string memory tooLongTitle = generateStringOfLength(
-            funderr.getMaxTitleLength() + 1
-        );
+        string memory tooLongTitle = generateStringOfLength(funderr.getMaxTitleLength() + 1);
 
         uint256 createCampaignFee = funderr.getCreateCampaignFee();
 
         vm.prank(CAMPAIGN_1_OWNER);
         vm.expectRevert(Errors.Funderr__TitleTooLong.selector);
-        funderr.createCampaign{value: createCampaignFee}(
-            GOAL,
-            DURATION,
-            tooLongTitle,
-            DEFAULT_DESCRIPTION_TEXT
-        );
+        funderr.createCampaign{value: createCampaignFee}(GOAL, DURATION, tooLongTitle, DEFAULT_DESCRIPTION_TEXT);
     }
 
     function testCreateCampaignFailsWhenDescriptionIsTooLong() public {
-        string memory tooLongDescription = generateStringOfLength(
-            funderr.getMaxDescriptionLength() + 1
-        );
+        string memory tooLongDescription = generateStringOfLength(funderr.getMaxDescriptionLength() + 1);
 
         uint256 createCampaignFee = funderr.getCreateCampaignFee();
 
         vm.prank(CAMPAIGN_1_OWNER);
         vm.expectRevert(Errors.Funderr__DescriptionTooLong.selector);
-        funderr.createCampaign{value: createCampaignFee}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            tooLongDescription
-        );
+        funderr.createCampaign{value: createCampaignFee}(GOAL, DURATION, DEFAULT_TITLE_TEXT, tooLongDescription);
     }
 
     function testCreateCampaignUpdatesTheCampaignIdList() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -183,10 +147,7 @@ contract FunderrTest is Test {
     function testCreateCampaignCreatesCampaignWithCorrectValues() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -215,20 +176,10 @@ contract FunderrTest is Test {
         uint256 createCampaignFee = funderr.getCreateCampaignFee();
 
         vm.expectEmit(true, true, true, true);
-        emit Events.CampaignCreated(
-            0,
-            CAMPAIGN_1_OWNER,
-            GOAL,
-            block.timestamp + DURATION
-        );
+        emit Events.CampaignCreated(0, CAMPAIGN_1_OWNER, GOAL, block.timestamp + DURATION);
 
         vm.prank(CAMPAIGN_1_OWNER);
-        funderr.createCampaign{value: createCampaignFee}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
-        );
+        funderr.createCampaign{value: createCampaignFee}(GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT);
     }
 
     // -- Contribute
@@ -241,16 +192,11 @@ contract FunderrTest is Test {
     function testContributeFailsWhenContributionIsZero() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
-        vm.expectRevert(
-            Errors.Funderr__ContributionMustBeGreaterThanZero.selector
-        );
+        vm.expectRevert(Errors.Funderr__ContributionMustBeGreaterThanZero.selector);
 
         vm.prank(USER);
         funderr.contribute{value: 0}(0);
@@ -259,10 +205,7 @@ contract FunderrTest is Test {
     function testContributeFailsWhenDeadlineHasPassed() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -275,10 +218,7 @@ contract FunderrTest is Test {
     function testContributeIncreasesContractBalanceByAmount() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -290,24 +230,16 @@ contract FunderrTest is Test {
         assertEq(fundMeBalanceBefore + GOAL, address(funderr).balance);
     }
 
-    function testContributeSetsTotalContributionsAndSeparateContributionsCorrectly()
-        public
-    {
+    function testContributeSetsTotalContributionsAndSeparateContributionsCorrectly() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
         vm.startPrank(CAMPAIGN_2_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -323,14 +255,11 @@ contract FunderrTest is Test {
         funderr.contribute{value: GOAL}(1);
         vm.stopPrank();
 
-        (, , , , uint256 totalContributedToCampaign, , , ) = funderr
-            .getCampaign(searchCampaignId);
+        (,,,, uint256 totalContributedToCampaign,,,) = funderr.getCampaign(searchCampaignId);
 
-        uint256 contributedByUser = funderr
-            .getCampaingContributionByContributor(searchCampaignId, USER);
+        uint256 contributedByUser = funderr.getCampaingContributionByContributor(searchCampaignId, USER);
 
-        uint256 contributedByUser2 = funderr
-            .getCampaingContributionByContributor(searchCampaignId, USER_2);
+        uint256 contributedByUser2 = funderr.getCampaingContributionByContributor(searchCampaignId, USER_2);
 
         assertEq(fundMeBalanceBefore + GOAL * 4, address(funderr).balance);
         assertEq(GOAL * 3, totalContributedToCampaign);
@@ -343,18 +272,12 @@ contract FunderrTest is Test {
 
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         funderr.contribute{value: GOAL}(0);
         vm.stopPrank();
 
-        assertEq(
-            fundMeBalanceBefore + GOAL + funderr.getCreateCampaignFee(),
-            address(funderr).balance
-        );
+        assertEq(fundMeBalanceBefore + GOAL + funderr.getCreateCampaignFee(), address(funderr).balance);
     }
 
     // -- Withdraw campaign contributions
@@ -362,10 +285,7 @@ contract FunderrTest is Test {
     function testWithdrawCampaignContributionsOnlyOwnerCanWIthdraw() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -378,15 +298,10 @@ contract FunderrTest is Test {
         funderr.withdrawCampaignContributions(searchCampaignId);
     }
 
-    function testWithdrawCampaignContributionsCanWithdrawOnlyAfterDeadline()
-        public
-    {
+    function testWithdrawCampaignContributionsCanWithdrawOnlyAfterDeadline() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -398,33 +313,21 @@ contract FunderrTest is Test {
         funderr.withdrawCampaignContributions(searchCampaignId);
     }
 
-    function testWithdrawCampaignContributionsCantWithdrawIfNothingWasContributed()
-        public
-    {
+    function testWithdrawCampaignContributionsCantWithdrawIfNothingWasContributed() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.warp(block.timestamp + DURATION + 1);
-        vm.expectRevert(
-            Errors.Funderr__TotalContributionsMustBeGreaterThanZero.selector
-        );
+        vm.expectRevert(Errors.Funderr__TotalContributionsMustBeGreaterThanZero.selector);
         funderr.withdrawCampaignContributions(searchCampaignId);
         vm.stopPrank();
     }
 
-    function testWithdrawCampaignContributionsCantWithdrawMoreThanOnce()
-        public
-    {
+    function testWithdrawCampaignContributionsCantWithdrawMoreThanOnce() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -439,15 +342,10 @@ contract FunderrTest is Test {
         vm.stopPrank();
     }
 
-    function testWithdrawCampaignContributionsCantWithdrawIfGoalNotReached()
-        public
-    {
+    function testWithdrawCampaignContributionsCantWithdrawIfGoalNotReached() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL * 2,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL * 2, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -463,10 +361,7 @@ contract FunderrTest is Test {
     function testWithdrawCampaignContributionsSetsWithdrawnFlagToTrue() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -477,22 +372,15 @@ contract FunderrTest is Test {
         vm.warp(block.timestamp + DURATION + 1);
         funderr.withdrawCampaignContributions(searchCampaignId);
 
-        (, , , , , bool fundsWithdrawn, , ) = funderr.getCampaign(
-            searchCampaignId
-        );
+        (,,,,, bool fundsWithdrawn,,) = funderr.getCampaign(searchCampaignId);
 
         assertEq(true, fundsWithdrawn);
     }
 
-    function testWithdrawCampaignContributionsTransfersTheFundsToOwner()
-        public
-    {
+    function testWithdrawCampaignContributionsTransfersTheFundsToOwner() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -507,20 +395,14 @@ contract FunderrTest is Test {
         funderr.withdrawCampaignContributions(searchCampaignId);
         uint256 campaign1OwnerBalanceAfter = CAMPAIGN_1_OWNER.balance;
 
-        assertEq(
-            GOAL,
-            campaign1OwnerBalanceAfter - campaign1OwnerBalanceBefore
-        );
+        assertEq(GOAL, campaign1OwnerBalanceAfter - campaign1OwnerBalanceBefore);
         assertEq(fundMeBalanceBefore, address(funderr).balance);
     }
 
     function testWithdrawCampaignContributionsEmitsEventOnTransfer() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -537,22 +419,15 @@ contract FunderrTest is Test {
 
     // -- Refund contributor contributions
 
-    function testRefundContributorContributionsFailsWhenCampaignDoesNotExist()
-        public
-    {
+    function testRefundContributorContributionsFailsWhenCampaignDoesNotExist() public {
         vm.expectRevert(Errors.Funderr__CampaignDoesNotExist.selector);
         funderr.refundContributorContributions(0);
     }
 
-    function testRefundContributorContributionsCantRefundIfBeforeCampaignDeadline()
-        public
-    {
+    function testRefundContributorContributionsCantRefundIfBeforeCampaignDeadline() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -561,15 +436,10 @@ contract FunderrTest is Test {
         funderr.refundContributorContributions(searchCampaignId);
     }
 
-    function testRefundContributorContributionsCantRefundIfUserDidNotContributeAnything()
-        public
-    {
+    function testRefundContributorContributionsCantRefundIfUserDidNotContributeAnything() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -579,15 +449,10 @@ contract FunderrTest is Test {
         funderr.refundContributorContributions(searchCampaignId);
     }
 
-    function testRefundContributorContributionsCanRefundImmediatelyIfCampaignDeadlineReachedAndGoalIsNot()
-        public
-    {
+    function testRefundContributorContributionsCanRefundImmediatelyIfCampaignDeadlineReachedAndGoalIsNot() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL * 2,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL * 2, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -602,114 +467,72 @@ contract FunderrTest is Test {
         assertEq(GOAL, userBalanceAfterRefund - userBalanceAfterContribution);
     }
 
-    function testRefundContributorContributionsCantRefundIfCampaignGoalHasBeenReachedAndCampaignIsNotStale()
-        public
-    {
+    function testRefundContributorContributionsCantRefundIfCampaignGoalHasBeenReachedAndCampaignIsNotStale() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
         vm.startPrank(USER);
         funderr.contribute{value: GOAL}(searchCampaignId);
         vm.warp(block.timestamp + DURATION + 1);
-        vm.expectRevert(
-            Errors
-                .Funderr__CampaignGoalHasBeenReachedAndWithdrawPeriodHasNotExpired
-                .selector
-        );
+        vm.expectRevert(Errors.Funderr__CampaignGoalHasBeenReachedAndWithdrawPeriodHasNotExpired.selector);
         funderr.refundContributorContributions(searchCampaignId);
         vm.stopPrank();
     }
 
-    function testRefundContributorContributionsCanRefundIfCampaignIsStale()
-        public
-    {
+    function testRefundContributorContributionsCanRefundIfCampaignIsStale() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
         vm.startPrank(USER);
         funderr.contribute{value: GOAL}(searchCampaignId);
         uint256 userBalanceAfterContribution = USER.balance;
-        vm.warp(
-            block.timestamp +
-                DURATION +
-                funderr.getActiveFundedCampaignWindow() +
-                1
-        );
+        vm.warp(block.timestamp + DURATION + funderr.getActiveFundedCampaignWindow() + 1);
         funderr.refundContributorContributions(searchCampaignId);
         uint256 userBalanceAfterRefund = USER.balance;
         vm.stopPrank();
 
         assertEq(GOAL, userBalanceAfterRefund - userBalanceAfterContribution);
-        assertEq(
-            0,
-            funderr.getCampaingContributionByContributor(searchCampaignId, USER)
-        );
+        assertEq(0, funderr.getCampaingContributionByContributor(searchCampaignId, USER));
     }
 
     function testRefundContributorContributionsCantRefundTwice() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
         vm.startPrank(USER);
         funderr.contribute{value: GOAL}(searchCampaignId);
-        vm.warp(
-            block.timestamp +
-                DURATION +
-                funderr.getActiveFundedCampaignWindow() +
-                1
-        );
+        vm.warp(block.timestamp + DURATION + funderr.getActiveFundedCampaignWindow() + 1);
         funderr.refundContributorContributions(searchCampaignId);
         vm.expectRevert(Errors.Funderr__NothingToRefund.selector);
         funderr.refundContributorContributions(searchCampaignId);
         vm.stopPrank();
     }
 
-    function testRefundContributorContributionsCantRefundIfCampaignHasBeenWithdrawn()
-        public
-    {
+    function testRefundContributorContributionsCantRefundIfCampaignHasBeenWithdrawn() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
         vm.prank(USER);
         funderr.contribute{value: GOAL}(searchCampaignId);
 
-        vm.warp(
-            block.timestamp +
-                DURATION +
-                funderr.getActiveFundedCampaignWindow() +
-                1
-        );
+        vm.warp(block.timestamp + DURATION + funderr.getActiveFundedCampaignWindow() + 1);
 
         vm.prank(CAMPAIGN_1_OWNER);
         funderr.withdrawCampaignContributions(searchCampaignId);
 
-        vm.expectRevert(
-            Errors.Funderr__CampaignContributionsHasBeenWithdrawn.selector
-        );
+        vm.expectRevert(Errors.Funderr__CampaignContributionsHasBeenWithdrawn.selector);
 
         vm.prank(USER);
         funderr.refundContributorContributions(searchCampaignId);
@@ -718,21 +541,13 @@ contract FunderrTest is Test {
     function testRefundContributorContributionsEmitsEventOnSuccess() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
         vm.startPrank(USER);
         funderr.contribute{value: GOAL}(searchCampaignId);
-        vm.warp(
-            block.timestamp +
-                DURATION +
-                funderr.getActiveFundedCampaignWindow() +
-                1
-        );
+        vm.warp(block.timestamp + DURATION + funderr.getActiveFundedCampaignWindow() + 1);
 
         vm.expectEmit(true, true, true, true);
         emit Events.RefundIssued(0, USER, GOAL);
@@ -755,17 +570,12 @@ contract FunderrTest is Test {
         funderr.collectFees();
     }
 
-    function testCollectFeesProperlyUpdatesTotalFeesCollectedAndSendsFundsToOwner()
-        public
-    {
+    function testCollectFeesProperlyUpdatesTotalFeesCollectedAndSendsFundsToOwner() public {
         assertEq(0, funderr.getFeesCollected());
 
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
@@ -777,20 +587,14 @@ contract FunderrTest is Test {
 
         uint256 ownerBalanceAfter = address(msg.sender).balance;
 
-        assertEq(
-            funderr.getCreateCampaignFee(),
-            ownerBalanceAfter - ownerBalanceBefore
-        );
+        assertEq(funderr.getCreateCampaignFee(), ownerBalanceAfter - ownerBalanceBefore);
         assertEq(0, funderr.getFeesCollected());
     }
 
     function testCollectFeesEmitsEventOnSuccess() public {
         vm.startPrank(CAMPAIGN_1_OWNER);
         funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
-            GOAL,
-            DURATION,
-            DEFAULT_TITLE_TEXT,
-            DEFAULT_DESCRIPTION_TEXT
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
         );
         vm.stopPrank();
 
