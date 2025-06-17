@@ -1,139 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// TODO: Consolidate all errors/reverts into modifiers
+import "./Errors.sol";
+import "./Modifiers.sol";
+import "./Events.sol";
+
 // TODO: Add contributed to campaigns mapping
 // TODO: Add campaign URL (?)
-// TODO: Move errors into separate file
 
-contract Funderr {
-    // Errors
-
-    error Funderr__CampaignDoesNotExist();
-    error Funderr__ContributionMustBeGreaterThanZero();
-    error Funderr__DeadlinePassed();
-    error Funderr__DeadlineNotReached();
-    error Funderr__OnlyOwner();
-    error Funderr__NotCampaignOwner();
-    error Funderr__TotalContributionsMustBeGreaterThanZero();
-    error Funderr__FundsAlreadyBeenWithdrawn();
-    error Funderr__WithdrawContributionsCallFailed();
-    error Funderr__GoalNotReached();
-    error Funderr__NothingToRefund();
-    error Funderr__RefundContributionCallFailed();
-    error Funderr__CampaignGoalHasBeenReachedAndWithdrawPeriodHasNotExpired();
-    error Funderr__CampaignContributionsHasBeenWithdrawn();
-    error Funderr__TitleTooLong();
-    error Funderr__DescriptionTooLong();
-    error Funderr__CreateCampaignFeeNotPaid();
-    error Funderr__NoFeesToCollect();
-    error Funderr__CollectFeesCallFailed();
-
-    // Structs
-
-    struct Campaign {
-        address owner;
-        uint256 goal;
-        uint256 deadline;
-        uint256 totalContributed;
-        bool fundsWithdrawn;
-        string title;
-        string description;
-        mapping(address => uint256) contributions;
-    }
-
+contract Funderr is Errors, Modifiers, Events {
     // State variables
-
     uint256 private campaignIdCounter;
     uint256 private feesCollected;
-    address private immutable i_owner;
     uint256 private immutable i_activeFundedCampaignWindow;
-    uint256 private immutable i_maxTitleLength;
-    uint256 private immutable i_maxDescriptionLength;
     uint256 private immutable i_createCampaignFee;
-    mapping(uint256 => Campaign) private campaigns;
     mapping(address => uint256[]) private campaignsByOwner;
 
-    // Events
-
-    event CampaignCreated(
-        uint256 indexed campaignId,
-        address indexed owner,
-        uint256 goal,
-        uint256 deadline
-    );
-
-    event ContributionReceived(
-        uint256 indexed campaignId,
-        address indexed contributor,
-        uint256 amount
-    );
-
-    event FundsWithdrawn(
-        uint256 indexed campaignId,
-        address indexed owner,
-        uint256 amount
-    );
-
-    event RefundIssued(
-        uint256 indexed campaignId,
-        address indexed contributor,
-        uint256 amount
-    );
-
-    event FeesCollected(address indexed collector, uint256 amount);
-
-    // Modifiers
-
-    modifier onlyOwner() {
-        if (msg.sender != i_owner) revert Funderr__OnlyOwner();
-        _;
-    }
-
-    modifier onlyCampaignOwner(uint256 campaignId) {
-        if (msg.sender != campaigns[campaignId].owner) {
-            revert Funderr__NotCampaignOwner();
-        }
-        _;
-    }
-
-    modifier campaignExists(uint256 campaignId) {
-        if (campaigns[campaignId].owner == address(0)) {
-            revert Funderr__CampaignDoesNotExist();
-        }
-        _;
-    }
-
-    modifier afterDeadline(uint256 campaignId) {
-        if (block.timestamp > campaigns[campaignId].deadline) {
-            revert Funderr__DeadlinePassed();
-        }
-        _;
-    }
-
-    modifier beforeDeadline(uint256 campaignId) {
-        if (block.timestamp <= campaigns[campaignId].deadline) {
-            revert Funderr__DeadlineNotReached();
-        }
-        _;
-    }
-
-    modifier titleTooLong(string memory title) {
-        if (bytes(title).length > i_maxTitleLength) {
-            revert Funderr__TitleTooLong();
-        }
-        _;
-    }
-
-    modifier descriptionTooLong(string memory description) {
-        if (bytes(description).length > i_maxDescriptionLength) {
-            revert Funderr__DescriptionTooLong();
-        }
-        _;
-    }
-
     // Constructor
-
     constructor(
         uint256 maxTitleLength,
         uint256 maxDescriptionLength,
@@ -148,7 +31,6 @@ contract Funderr {
     }
 
     // Public functional functions
-
     function createCampaign(
         uint256 goalInWei,
         uint256 durationInSeconds,
@@ -257,7 +139,6 @@ contract Funderr {
     }
 
     // Public helper functions
-
     function getOwner() external view returns (address) {
         return i_owner;
     }
