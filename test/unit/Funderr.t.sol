@@ -85,7 +85,7 @@ contract FunderrTest is Test {
 
     function testGetCampaingContributionByContributorFailsWhenCampaignDoesNotExist() public {
         vm.expectRevert(Errors.Funderr__CampaignDoesNotExist.selector);
-        funderr.getCampaingContributionByContributor(searchCampaignId, CAMPAIGN_1_OWNER);
+        funderr.getCampaignContributionByContributor(searchCampaignId, CAMPAIGN_1_OWNER);
     }
 
     function testGetCampaingContributionByContributorReturnsZeroForNonExistentContributor() public {
@@ -95,7 +95,7 @@ contract FunderrTest is Test {
         );
         vm.stopPrank();
 
-        uint256 contributedByUser2 = funderr.getCampaingContributionByContributor(searchCampaignId, USER_2);
+        uint256 contributedByUser2 = funderr.getCampaignContributionByContributor(searchCampaignId, USER_2);
 
         assertEq(0, contributedByUser2);
     }
@@ -251,9 +251,9 @@ contract FunderrTest is Test {
 
         (,,,, uint256 totalContributedToCampaign,,,) = funderr.getCampaign(searchCampaignId);
 
-        uint256 contributedByUser = funderr.getCampaingContributionByContributor(searchCampaignId, USER);
+        uint256 contributedByUser = funderr.getCampaignContributionByContributor(searchCampaignId, USER);
 
-        uint256 contributedByUser2 = funderr.getCampaingContributionByContributor(searchCampaignId, USER_2);
+        uint256 contributedByUser2 = funderr.getCampaignContributionByContributor(searchCampaignId, USER_2);
 
         assertEq(fundMeBalanceBefore + GOAL * 4, address(funderr).balance);
         assertEq(GOAL * 3, totalContributedToCampaign);
@@ -272,6 +272,78 @@ contract FunderrTest is Test {
         vm.stopPrank();
 
         assertEq(fundMeBalanceBefore + GOAL + funderr.getCreateCampaignFee(), address(funderr).balance);
+    }
+
+    function testContributeAddsCampaignIdToContributedList() public {
+        vm.startPrank(CAMPAIGN_1_OWNER);
+        funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
+        );
+        vm.stopPrank();
+
+        vm.startPrank(CAMPAIGN_2_OWNER);
+        funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
+        );
+        vm.stopPrank();
+
+        vm.startPrank(USER);
+        funderr.contribute{value: GOAL}(searchCampaignId);
+        funderr.contribute{value: GOAL}(1);
+        vm.stopPrank();
+
+        uint256[] memory expected = new uint256[](2);
+        expected[0] = 0;
+        expected[1] = 1;
+
+        assertEq(expected, funderr.getContributedCampaignsByContributor(USER));
+    }
+
+    function testContributeDoesNotAddCampaignIdTwiceIfContributedTwice() public {
+        vm.startPrank(CAMPAIGN_1_OWNER);
+        funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
+        );
+        vm.stopPrank();
+
+        vm.startPrank(USER);
+        funderr.contribute{value: GOAL}(searchCampaignId);
+        funderr.contribute{value: GOAL}(searchCampaignId);
+        vm.stopPrank();
+
+        uint256[] memory expected = new uint256[](1);
+        expected[0] = 0;
+
+        assertEq(expected, funderr.getContributedCampaignsByContributor(USER));
+    }
+
+    function testRefundContributorContributionsRemovesCampaignIdFromContributedListIfRefunded() public {
+        vm.startPrank(CAMPAIGN_1_OWNER);
+        funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
+        );
+        vm.stopPrank();
+
+        vm.startPrank(CAMPAIGN_2_OWNER);
+        funderr.createCampaign{value: funderr.getCreateCampaignFee()}(
+            GOAL, DURATION, DEFAULT_TITLE_TEXT, DEFAULT_DESCRIPTION_TEXT
+        );
+        vm.stopPrank();
+
+        vm.startPrank(USER);
+        funderr.contribute{value: GOAL}(searchCampaignId);
+        funderr.contribute{value: GOAL}(1);
+        vm.stopPrank();
+
+        vm.warp(block.timestamp + DURATION + funderr.getActiveFundedCampaignWindow() + 1);
+
+        vm.prank(USER);
+        funderr.refundContributorContributions(searchCampaignId);
+
+        uint256[] memory expected = new uint256[](1);
+        expected[0] = 1;
+
+        assertEq(expected, funderr.getContributedCampaignsByContributor(USER));
     }
 
     // -- Withdraw campaign contributions
@@ -490,7 +562,7 @@ contract FunderrTest is Test {
         vm.stopPrank();
 
         assertEq(GOAL, userBalanceAfterRefund - userBalanceAfterContribution);
-        assertEq(0, funderr.getCampaingContributionByContributor(searchCampaignId, USER));
+        assertEq(0, funderr.getCampaignContributionByContributor(searchCampaignId, USER));
     }
 
     function testRefundContributorContributionsCantRefundTwice() public {

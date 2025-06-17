@@ -5,7 +5,6 @@ import "./Errors.sol";
 import "./Modifiers.sol";
 import "./Events.sol";
 
-// TODO: Add contributed to campaigns mapping
 // TODO: Add campaign URL (?)
 
 contract Funderr is Errors, Modifiers, Events {
@@ -15,6 +14,8 @@ contract Funderr is Errors, Modifiers, Events {
     uint256 private immutable i_activeFundedCampaignWindow;
     uint256 private immutable i_createCampaignFee;
     mapping(address => uint256[]) private campaignsByOwner;
+    mapping(address => uint256[]) private contributedCampaignsByContributor;
+    mapping(address => mapping(uint256 => bool)) private hasContributedToCampaign;
 
     // Constructor
     constructor(
@@ -77,6 +78,11 @@ contract Funderr is Errors, Modifiers, Events {
         c.contributions[msg.sender] += msg.value;
         c.totalContributed += msg.value;
 
+        if (!hasContributedToCampaign[msg.sender][campaignId]) {
+            contributedCampaignsByContributor[msg.sender].push(campaignId);
+            hasContributedToCampaign[msg.sender][campaignId] = true;
+        }
+
         emit ContributionReceived(campaignId, msg.sender, msg.value);
     }
 
@@ -123,6 +129,9 @@ contract Funderr is Errors, Modifiers, Events {
 
         uint256 amountToRefund = c.contributions[msg.sender];
         c.contributions[msg.sender] = 0;
+
+        _removeCampaignFromContributorArray(msg.sender, campaignId);
+        hasContributedToCampaign[msg.sender][campaignId] = false;
 
         (bool callSuccess,) = payable(msg.sender).call{value: amountToRefund}("");
 
@@ -171,7 +180,7 @@ contract Funderr is Errors, Modifiers, Events {
         return (campaignId, c.owner, c.goal, c.deadline, c.totalContributed, c.fundsWithdrawn, c.title, c.description);
     }
 
-    function getCampaingContributionByContributor(uint256 campaignId, address contributor)
+    function getCampaignContributionByContributor(uint256 campaignId, address contributor)
         external
         view
         campaignExists(campaignId)
@@ -184,10 +193,20 @@ contract Funderr is Errors, Modifiers, Events {
         return campaignsByOwner[owner];
     }
 
-    // TODO:
-    // function getContributedCampaignsByContributor(
-    //     address contributor
-    // ) external view returns (uint256[] memory) {
-    //     return contributedCampaignsByContributor[contributor];
-    // }
+    function getContributedCampaignsByContributor(address contributor) external view returns (uint256[] memory) {
+        return contributedCampaignsByContributor[contributor];
+    }
+
+    // Internal helper functions
+    function _removeCampaignFromContributorArray(address contributor, uint256 campaignId) internal {
+        uint256[] storage campaigns = contributedCampaignsByContributor[contributor];
+
+        for (uint256 i = 0; i < campaigns.length; i++) {
+            if (campaigns[i] == campaignId) {
+                campaigns[i] = campaigns[campaigns.length - 1];
+                campaigns.pop();
+                break;
+            }
+        }
+    }
 }
