@@ -7,4 +7,4 @@ has passed, then the creator can withdraw contributions. If after deadline has p
 the creator has not withdrawn within a month, the contributors can withdraw their funds - this will allow to prevent stale
 campaigns existence.
 
-The barebones frontend that can be used to explore all dApp functions can be found here: [FunderrFrontend](https://github.com/accurec/FunderrFrontend). It can be run with Live Server in VS Code.
+The barebones React + ethers.js frontend that can be used to explore all dApp functions can be found here: [FunderrFrontend](https://github.com/accurec/FunderrFrontend).
