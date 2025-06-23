@@ -8,3 +8,7 @@ the creator has not withdrawn within a month, the contributors can withdraw thei
 campaigns existence.
 
 The barebones React + ethers.js frontend that can be used to explore all dApp functions can be found here: [FunderrFrontend](https://github.com/accurec/FunderrFrontend).
+
+## TODO
+
+1) Add the image URL fields so that it is possible to have images attached to campaigns. Pass URLs as part of create campaign call.
